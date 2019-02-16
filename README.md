@@ -8,6 +8,5 @@
 2. 实现方式是基于网格计算迷雾，没有使用后处理的方式，适用于移动和PC端。<br>
 3. 迷雾的计算在CPU端，该算法基于Greg McIntyre的libfov:https://sourceforge.net/projects/libfov/。
 
-# Screenshot of the plugin:
-###
+# Screenshot
 ![](Files/Img.png)
