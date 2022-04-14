@@ -23,7 +23,7 @@ namespace WarFog {
         public  static ScriptObjectPool<PoolType> getInstance() {
             if(m_PoolInstance == null) {
                 m_PoolInstance = new ScriptObjectPool<PoolType>();
-                m_PoolInstance.InitPool(DefaultLength);
+                m_PoolInstance.initPool(DefaultLength);
             }
 
             return m_PoolInstance;
@@ -35,7 +35,8 @@ namespace WarFog {
         private PoolType[] m_Pool = null;
         private int m_Pool_Current_Index = 0;
 
-        public void InitPool(int pInitLength) {
+        private void initPool(int pInitLength) 
+        {
             this.m_Pool = new PoolType[pInitLength];
             this.m_Pool_Current_Index = pInitLength;
 

@@ -3,16 +3,19 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace WarFog {
+namespace WarFog 
+{
     /// <summary>
     ///definition of map element.
     /// </summary>
-    public class WarFog_Map_Element {
+    public class WarFog_Map_Element 
+    {
         public readonly int X;
         public readonly int Y;
         public readonly bool IsBlock;
 
-        public WarFog_Map_Element(int pX, int pY, bool pIsBlock) {
+        public WarFog_Map_Element(int pX, int pY, bool pIsBlock) 
+        {
             this.X = pX;
             this.Y = pY;
             this.IsBlock = pIsBlock;
@@ -22,7 +25,8 @@ namespace WarFog {
     /// <summary>
     ///definition of map element.
     /// </summary>
-    public class WarFog_Element : PoolTypeInterface {
+    public class WarFog_Element : PoolTypeInterface 
+    {
         public int X { get; private set; }
         public int Y { get; private set; }
         public bool IsFog { get; private set; }
@@ -43,7 +47,8 @@ namespace WarFog {
     /// <summary>
     ///definition of checkpoint in map.
     /// </summary>
-    public class WarFog_CheckPoint : PoolTypeInterface {
+    public class WarFog_CheckPoint : PoolTypeInterface 
+    {
         public int X { get; private set; }
         public int Y { get; private set; }
         public int Radius { get; private set; }
@@ -62,13 +67,11 @@ namespace WarFog {
             this.Radius = 0;
         }
 
-        public static void clearLinkList(LinkedList<WarFog_CheckPoint> pPointList) {
-            var pointNode = pPointList.First;
-
-            while(pointNode != null) {
-                ScriptObjectPool<WarFog_CheckPoint>.getInstance().pushPoolObject(pointNode.Value);
-
-                pointNode = pointNode.Next;
+        public static void clearLinkList(List<WarFog_CheckPoint> pPointList) 
+        {
+            for (int pointIndex = 0; pointIndex < pPointList.Count; ++pointIndex)
+            {
+                ScriptObjectPool<WarFog_CheckPoint>.getInstance().pushPoolObject(pPointList[pointIndex]);
             }
 
             pPointList.Clear();
@@ -84,14 +87,16 @@ namespace WarFog {
         public int ValidDistance { get; private set; }
         public List<WarFog_Element> FogData { get; private set; }
 
-        public void setData(int pX, int pY, int pValidDistance, List<WarFog_Element> pFogData) {
+        public void setData(int pX, int pY, int pValidDistance, List<WarFog_Element> pFogData) 
+        {
             this.X = pX;
             this.Y = pY;
             this.ValidDistance = pValidDistance;
             this.FogData = pFogData;
         }
 
-        public void reset() {
+        public void reset() 
+        {
             this.X = -1;
             this.Y = -1;
             this.ValidDistance = 0;

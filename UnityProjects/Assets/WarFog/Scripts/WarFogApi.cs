@@ -3,12 +3,14 @@ using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
 
-namespace WarFog {
+namespace WarFog 
+{
     /// <summary>
     /// type of war-fog, if you choose nothing, the war-fog will not works.
     /// 1. war-fog is created by mesh api and rendering fog on triangles.
     /// </summary>
-    public enum WarFogType {
+    public enum WarFogType 
+    {
         Nothing = 0,
         WarFog_Plane = 1,
     }
@@ -16,7 +18,8 @@ namespace WarFog {
     /// <summary>
     /// Api for invoked by application.
     /// </summary>
-    public class WarFogApi {
+    public class WarFogApi 
+    {
         #region GetInstance
         private static WarFogApi m_APIInstance = null;
         public static WarFogApi getInstance() {
@@ -46,7 +49,8 @@ namespace WarFog {
         /// <param name="pCurrentType">warfog type</param>
         /// <param name="pPostProcessMainCamera">Camera for postprocess model</param>
         /// <param name="pParentTransForPlaneWarFogTrans">Parent transform for plane model, if parment is null, the parment will world.</param>
-        public void initWarFog(WarFogType pCurrentType, Transform pParentTransForPlaneWarFogTrans) {
+        public void InitWarFog(WarFogType pCurrentType, Transform pParentTransForPlaneWarFogTrans) 
+        {
             this.m_CurrentType = pCurrentType;
             this.m_ParentTransForPlaneWarFogTrans = pParentTransForPlaneWarFogTrans;
 
@@ -64,7 +68,8 @@ namespace WarFog {
         /// <param name="pHeightPerCell">height of cell</param>
         /// <param name="pH_Cell_Counts">the count of horizontal cells</param>
         /// <param name="pV_Cell_Counts">the count of veritacal cells</param>
-        public void setParments(Material pRenderMat, Vector3 pOriginPos, float pWidthPerCell, float pHeightPerCell, int pH_Cell_Counts, int pV_Cell_Counts) {
+        public void SetParments(Material pRenderMat, Vector3 pOriginPos, float pWidthPerCell, float pHeightPerCell, int pH_Cell_Counts, int pV_Cell_Counts) 
+        {
             m_OriginPos = pOriginPos;
             m_WidthPerCell = pWidthPerCell;
             m_HeightPerCell = pHeightPerCell;
@@ -72,7 +77,7 @@ namespace WarFog {
             m_V_Cell_Counts = pV_Cell_Counts;
 
             if (this.m_CurrentType == WarFogType.WarFog_Plane) {
-                PlaneDisplayer.setParments(this.m_ParentTransForPlaneWarFogTrans, pRenderMat, pOriginPos, pWidthPerCell, pHeightPerCell, pH_Cell_Counts, pV_Cell_Counts);
+                PlaneDisplayer.SetParments(this.m_ParentTransForPlaneWarFogTrans, pRenderMat, pOriginPos, pWidthPerCell, pHeightPerCell, pH_Cell_Counts, pV_Cell_Counts);
             }
         }
 
@@ -80,9 +85,10 @@ namespace WarFog {
         /// update fog texture data
         /// </summary>
         /// <param name="pFogData">the fog texture for render</param>
-        public void setFogData(int[,] pFogData) {
+        public void setFogData(bool[,] pFogData) 
+        {
             if(this.m_CurrentType == WarFogType.WarFog_Plane) {
-                PlaneDisplayer.setFogData(pFogData);
+                PlaneDisplayer.SetFogData(pFogData);
             }
         }
 

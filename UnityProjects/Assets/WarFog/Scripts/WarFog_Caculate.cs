@@ -10,15 +10,18 @@ using System.Text;
 using UnityEngine;
 
 namespace WarFog {
-    public class WarFog_Caculate_Parments {
+    public class WarFog_Caculate_Parments 
+    {
         public const int MultiplyX = 10000;
     }
 
-    public class WarFog_Caculate {
-        public WarFog_Map_Element[,] MapData { get; private set; }
-        public bool[,] CurrentFogData { get; private set; }
-        public int Width { get; private set;}
-        public int Height { get; private set; }
+    public class WarFog_Caculate 
+    {
+        public bool[,] CurrentFogData;
+
+        private bool[,] MapData;
+        private int Width;
+        private int Height;
 
         private Dictionary<int, WarFog_CheckPointStoreElement> m_StaticCheckPointDic = new Dictionary<int, WarFog_CheckPointStoreElement>();
         private List<WarFog_Element> m_StaticCheckData = new List<WarFog_Element>();
@@ -29,7 +32,8 @@ namespace WarFog {
         /// <param name="pMapData">block data in map</param>
         /// <param name="pWidth">the width of map</param>
         /// <param name="pHeight">the height of map</param>
-        public void setMapData(WarFog_Map_Element[,] pMapData, int pWidth, int pHeight) {
+        public void SetMapData(bool[,] pMapData, int pWidth, int pHeight) 
+        {
             this.MapData = pMapData;
             this.Width = pWidth;
             this.Height = pHeight;
@@ -46,14 +50,15 @@ namespace WarFog {
         /// add or update static check points.
         /// </summary>
         /// <param name="pPointList">the new list of checkpoints</param>
-        public void addOrUpdateStaticCheckPoints(LinkedList<WarFog_CheckPoint> pPointList) {
-            LinkedList<WarFog_CheckPoint> calulateList = new LinkedList<WarFog_CheckPoint>();
+        public void AddOrUpdateStaticCheckPoints(List<WarFog_CheckPoint> pPointList) 
+        {
+            List<WarFog_CheckPoint> calulateList = new List<WarFog_CheckPoint>();
 
-            var pointNode = pPointList.First;
-            while(pointNode != null) {
-                int hashKey = pointNode.Value.X * WarFog_Caculate_Parments.MultiplyX + pointNode.Value.Y;
+            for(int pointIndex = 0; pointIndex < pPointList.Count; ++pointIndex) {
+                var pointNode = pPointList[pointIndex];
+                int hashKey = pointNode.X * WarFog_Caculate_Parments.MultiplyX + pointNode.Y;
 
-                if (!(m_StaticCheckPointDic.ContainsKey(hashKey) && m_StaticCheckPointDic[hashKey].ValidDistance == pointNode.Value.Radius)) {
+                if (!(m_StaticCheckPointDic.ContainsKey(hashKey) && m_StaticCheckPointDic[hashKey].ValidDistance == pointNode.Radius)) {
                     if (m_StaticCheckPointDic.ContainsKey(hashKey)) {
                         m_StaticCheckPointDic[hashKey].reset();
                         ScriptObjectPool<WarFog_CheckPointStoreElement>.getInstance().pushPoolObject(m_StaticCheckPointDic[hashKey]);
@@ -61,15 +66,13 @@ namespace WarFog {
                     }
 
                     var oneCheckPoint = ScriptObjectPool<WarFog_CheckPoint>.getInstance().getPoolObject();
-                    oneCheckPoint.setCheckPoint(pointNode.Value.X, pointNode.Value.Y, pointNode.Value.Radius);
-                    calulateList.AddLast(oneCheckPoint);
+                    oneCheckPoint.setCheckPoint(pointNode.X, pointNode.Y, pointNode.Radius);
+                    calulateList.Add(oneCheckPoint);
                 }
-
-                pointNode = pointNode.Next;
             }
 
             WarFog_CheckPoint.clearLinkList(pPointList);
-            caculateFogData(calulateList, m_StaticCheckPointDic);
+            CaculateFogData(calulateList, m_StaticCheckPointDic);
             assemblyStaticCheckPoints(m_StaticCheckPointDic, m_StaticCheckData);
         }
 
@@ -77,17 +80,17 @@ namespace WarFog {
         /// remove not used static checkpoints.
         /// </summary>
         /// <param name="pPointList"></param>
-        public void removeStaticCheckPoints(LinkedList<WarFog_CheckPoint> pPointList) {
-            var pointNode = pPointList.First;
-            while (pointNode != null) {
-                int hashKey = pointNode.Value.X * WarFog_Caculate_Parments.MultiplyX + pointNode.Value.Y;
+        public void RemoveStaticCheckPoints(List<WarFog_CheckPoint> pPointList) 
+        {
+            for (int pointIndex = 0; pointIndex < pPointList.Count; ++pointIndex)
+            {
+                var pointNode = pPointList[pointIndex];
+                int hashKey = pointNode.X * WarFog_Caculate_Parments.MultiplyX + pointNode.Y;
                 if (m_StaticCheckPointDic.ContainsKey(hashKey)) {
                     m_StaticCheckPointDic[hashKey].reset();
                     ScriptObjectPool<WarFog_CheckPointStoreElement>.getInstance().pushPoolObject(m_StaticCheckPointDic[hashKey]);
                     m_StaticCheckPointDic.Remove(hashKey);
                 }
-
-                pointNode = pointNode.Next;
             }
 
             WarFog_CheckPoint.clearLinkList(pPointList);
@@ -98,7 +101,8 @@ namespace WarFog {
         /// set dynamic checkpoints.
         /// </summary>
         /// <param name="pPointList">the new list of checkpoints</param>
-        public void setDynamicCheckPoints(LinkedList<WarFog_CheckPoint> pPointList) {
+        public void SetDynamicCheckPoints(List<WarFog_CheckPoint> pPointList) 
+        {
             this.clearFogData();
 
             //assemble static fog.
@@ -107,41 +111,40 @@ namespace WarFog {
                 this.CurrentFogData[oneFogElement.X, oneFogElement.Y] = oneFogElement.IsFog;
             }
 
-            caculateFogData(pPointList, null);
+            CaculateFogData(pPointList, null);
         }
 
-        public void caculateFogData(LinkedList<WarFog_CheckPoint> pCaculateList, Dictionary<int, WarFog_CheckPointStoreElement> pStoreDic) {
-            var pointNode = pCaculateList.First;
-
-            while(pointNode != null) {
-                if(pStoreDic != null) {
-                    int hashKey = pointNode.Value.X * WarFog_Caculate_Parments.MultiplyX + pointNode.Value.Y;
+        public void CaculateFogData(List<WarFog_CheckPoint> pCaculateList, Dictionary<int, WarFog_CheckPointStoreElement> pStoreDic) 
+        {
+            for (int pointIndex = 0; pointIndex < pCaculateList.Count; ++pointIndex)
+            {
+                var pointNode = pCaculateList[pointIndex];
+                if (pStoreDic != null) {
+                    int hashKey = pointNode.X * WarFog_Caculate_Parments.MultiplyX + pointNode.Y;
                     var oneCheckPointElement = ScriptObjectPool<WarFog_CheckPointStoreElement>.getInstance().getPoolObject();
                     var oneWarElement = ScriptObjectPool<WarFog_Element>.getInstance().getPoolObject();
-                    oneWarElement.setElement(pointNode.Value.X, pointNode.Value.Y, false);
+                    oneWarElement.setElement(pointNode.X, pointNode.Y, false);
                     List<WarFog_Element> fogData = new List<WarFog_Element>() { oneWarElement };
-                    oneCheckPointElement.setData(pointNode.Value.X, pointNode.Value.Y, pointNode.Value.Radius, fogData);
+                    oneCheckPointElement.setData(pointNode.X, pointNode.Y, pointNode.Radius, fogData);
                     pStoreDic.Add(hashKey, oneCheckPointElement);
                 } else {
-                    this.CurrentFogData[pointNode.Value.X, pointNode.Value.Y] = false;
+                    this.CurrentFogData[pointNode.X, pointNode.Y] = false;
                 }
 
-                caculateOneCorner(pointNode.Value, 1, 1, 1, true, 0, 1.0f, true, true, pStoreDic);
-                caculateOneCorner(pointNode.Value, 1, 1, 1, false, 0, 1.0f, true, true, pStoreDic);
-                caculateOneCorner(pointNode.Value, 1, 1, -1, true, 0, 1.0f, true, true, pStoreDic);
-                caculateOneCorner(pointNode.Value, 1, 1, -1, false, 0, 1.0f, true, true, pStoreDic);
-                caculateOneCorner(pointNode.Value, 1, -1, 1, true, 0, 1.0f, true, true, pStoreDic);
-                caculateOneCorner(pointNode.Value, 1, -1, 1, false, 0, 1.0f, true, true, pStoreDic);
-                caculateOneCorner(pointNode.Value, 1, -1, -1, true, 0, 1.0f, true, true, pStoreDic);
-                caculateOneCorner(pointNode.Value, 1, -1, -1, false, 0, 1.0f, true, true, pStoreDic);
-
-                pointNode = pointNode.Next;
+                CaculateOneCorner(pointNode, 1, 1, 1, true, 0, 1.0f, true, true, pStoreDic);
+                CaculateOneCorner(pointNode, 1, 1, 1, false, 0, 1.0f, true, true, pStoreDic);
+                CaculateOneCorner(pointNode, 1, 1, -1, true, 0, 1.0f, true, true, pStoreDic);
+                CaculateOneCorner(pointNode, 1, 1, -1, false, 0, 1.0f, true, true, pStoreDic);
+                CaculateOneCorner(pointNode, 1, -1, 1, true, 0, 1.0f, true, true, pStoreDic);
+                CaculateOneCorner(pointNode, 1, -1, 1, false, 0, 1.0f, true, true, pStoreDic);
+                CaculateOneCorner(pointNode, 1, -1, -1, true, 0, 1.0f, true, true, pStoreDic);
+                CaculateOneCorner(pointNode, 1, -1, -1, false, 0, 1.0f, true, true, pStoreDic);
             }
 
             WarFog_CheckPoint.clearLinkList(pCaculateList);
         }
 
-        private void caculateOneCorner(WarFog_CheckPoint pCheckPoint, int pStepDistance, int pSignX, int pSignY, bool pIsAlongX, 
+        private void CaculateOneCorner(WarFog_CheckPoint pCheckPoint, int pStepDistance, int pSignX, int pSignY, bool pIsAlongX, 
                                         float pStartSlope, float pEndSlope, bool pCaculateDiagonal, 
                                         bool pCaculateEdge, Dictionary<int, WarFog_CheckPointStoreElement> pStoreDic) {
             int x = 0;
@@ -152,7 +155,7 @@ namespace WarFog {
             float end_slope_next;
 
             if (pStepDistance == 0) {
-                caculateOneCorner(pCheckPoint, pStepDistance + 1, pSignX, pSignY, pIsAlongX, pStartSlope, pEndSlope, pCaculateDiagonal, pCaculateEdge, pStoreDic);
+                CaculateOneCorner(pCheckPoint, pStepDistance + 1, pSignX, pSignY, pIsAlongX, pStartSlope, pEndSlope, pCaculateDiagonal, pCaculateEdge, pStoreDic);
                 return;
             } else if ((uint)pStepDistance > pCheckPoint.Radius) {
                 return;
@@ -198,7 +201,7 @@ namespace WarFog {
                     }                                                                               
                     if (prev_blocked == 0) {                                                        
                         end_slope_next = caculateSlope((float)pStepDistance + 0.5f, (float)dy - 0.5f);
-                        caculateOneCorner(pCheckPoint, pStepDistance + 1, pSignX, pSignY, pIsAlongX, pStartSlope, end_slope_next, pCaculateDiagonal, pCaculateEdge, pStoreDic);
+                        CaculateOneCorner(pCheckPoint, pStepDistance + 1, pSignX, pSignY, pIsAlongX, pStartSlope, end_slope_next, pCaculateDiagonal, pCaculateEdge, pStoreDic);
                     }                                                                               
                     prev_blocked = 1;                                                               
                 } else {                                                                            
@@ -222,7 +225,7 @@ namespace WarFog {
             }                                                                                       
                                                                                                     
             if (prev_blocked == 0) {                                                                    
-                caculateOneCorner(pCheckPoint, pStepDistance +1, pSignX, pSignY, pIsAlongX, pStartSlope, pEndSlope, pCaculateDiagonal, pCaculateEdge, pStoreDic);
+                CaculateOneCorner(pCheckPoint, pStepDistance +1, pSignX, pSignY, pIsAlongX, pStartSlope, pEndSlope, pCaculateDiagonal, pCaculateEdge, pStoreDic);
             }
         }
 
@@ -252,12 +255,13 @@ namespace WarFog {
             pStoreDic.Clear();
         }
 
-        private bool isMapOpaque(int pX, int pY) {
+        private bool isMapOpaque(int pX, int pY) 
+        {
             if(pX < 0 || pY < 0 || pX >= this.Width || pY >= this.Height) {
                 return true;
             }
 
-            return this.MapData[pX, pY].IsBlock;
+            return this.MapData[pX, pY];
         }
 
         private void clearFogData() {

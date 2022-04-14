@@ -2,28 +2,34 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace WarFog {
-    public class WarFog_Plane_Config {
+namespace WarFog 
+{
+    public class WarFog_Plane_Config 
+    {
         /// <summary>
         /// the interval of fade fog from old data to new data.
         /// </summary>
         public const float FadeInterval = 1.0f;
     }
 
-    public class WarFog_Plane {
+    public class WarFog_Plane 
+    {
         private Transform m_ParentTrans = null;
         private Material m_RenderMat = null;
         private Texture2D m_FogTex = null;
 
-        private int[,] currentFogData = null;
+        // 存四帧数据 在bit 位 0,1,2,3上分别存储
+        private byte[,] m_fogCacheData = null;
         private Vector3 m_OriginPos = Vector3.zero;
         private float m_WidthPerCell, m_HeightPerCell;
         private int m_H_Vertices_Counts, m_V_Vertices_Counts;
 
-        private bool m_FadeTimeValid = true;
-        private float m_FadeStartTime = Time.unscaledTime;
-
-        public void setParments(Transform pParentTrans, Material pRenderMat, Vector3 pOriginPos, float pWidthPerCell, float pHeightPerCell, int pH_Cell_Counts, int pV_Cell_Counts) {
+        /// <summary>
+        /// 设置网格参数
+        /// </summary>
+        public void SetParments(Transform pParentTrans, Material pRenderMat, Vector3 pOriginPos, 
+            float pWidthPerCell, float pHeightPerCell, int pH_Cell_Counts, int pV_Cell_Counts) 
+        {
             this.m_ParentTrans = pParentTrans;
             this.m_RenderMat = pRenderMat;
             this.m_OriginPos = pOriginPos;
@@ -31,17 +37,24 @@ namespace WarFog {
             this.m_HeightPerCell = pHeightPerCell;
             this.m_H_Vertices_Counts = pH_Cell_Counts + 1;
             this.m_V_Vertices_Counts = pV_Cell_Counts + 1;
-            this.currentFogData = new int[pH_Cell_Counts, pV_Cell_Counts];
-            for(int vIndex = 0; vIndex < pV_Cell_Counts; ++vIndex) {
-                for(int hIndex = 0; hIndex < pH_Cell_Counts; ++hIndex) {
-                    this.currentFogData[vIndex, hIndex] = 1;
+            this.m_fogCacheData = new byte[pH_Cell_Counts, pV_Cell_Counts];
+
+            for (int vIndex = 0; vIndex < pV_Cell_Counts; ++vIndex)
+            {
+                for (int hIndex = 0; hIndex < pH_Cell_Counts; ++hIndex)
+                {
+                    this.m_fogCacheData[vIndex, hIndex] = 1 + 2 + 4 + 8;
                 }
             }
 
-            this.buildWarFog();
+            this.BuildWarFog();
         }
 
-        private void buildWarFog() {
+        /// <summary>
+        /// 创建迷雾网格
+        /// </summary>
+        private void BuildWarFog() 
+        {
             //create game object.
             GameObject fogObject = new GameObject("WarFog_Plane");
             fogObject.transform.SetParent(this.m_ParentTrans);
@@ -100,44 +113,43 @@ namespace WarFog {
             this.m_RenderMat.mainTexture = this.m_FogTex;
         }
 
-        public void setFogData(int[,] pData) {
-            //bool isNotEqual = false;
-            //for (int y = 0; y < m_V_Vertices_Counts - 1; ++y) {
-            //    for (int x = 0; x < m_H_Vertices_Counts - 1; ++x) {
-            //        if(currentFogData[y, x] != pData[y, x]) {
-            //            isNotEqual = true;
-            //            break;
-            //        }
-            //    }
-            //    if(isNotEqual) {
-            //        break;
-            //    }
-            //}
-
-            //if(isNotEqual) {
-                for (int y = 0; y < m_V_Vertices_Counts - 1; ++y) {
-                    for (int x = 0; x < m_H_Vertices_Counts - 1; ++x) {
-                        this.m_FogTex.SetPixel(x, y, new Color(currentFogData[y, x], pData[y, x], 0, 1));
-                        currentFogData[y, x] = pData[y, x];
+        /// <summary>
+        /// 设置迷雾网格数据
+        /// </summary>
+        /// <param name="pData"></param>
+        public void SetFogData(bool[,] pData) 
+        {
+            for (int y = 0; y < m_V_Vertices_Counts - 1; ++y)
+            {
+                for (int x = 0; x < m_H_Vertices_Counts - 1; ++x)
+                {
+                    // 缓存数据
+                    int point = m_fogCacheData[y, x];
+                    point = point >> 1;
+                    if(pData[y, x])
+                    {
+                        point += 8;
                     }
+                    m_fogCacheData[y, x] = (byte)point;
+
+                    // 计算颜色
+                    int r = point & 1;
+                    int g = point & 2 >> 1;
+                    int b = point & 4 >> 2;
+                    int a = point & 8 >> 3;
+
+                    this.m_FogTex.SetPixel(x, y, new Color(r, g, b, a));
                 }
-                this.m_FogTex.Apply();
-                this.m_RenderMat.SetFloat("_FadeTime", 0);
-                this.m_FadeTimeValid = true;
-                this.m_FadeStartTime = Time.unscaledTime;
-            //}
+            }
+            this.m_FogTex.Apply();
         }
 
-        public void updateFog() {
-            if(this.m_FadeTimeValid) {
-                float currentFadeTime = (Time.unscaledTime - this.m_FadeStartTime) / WarFog_Plane_Config.FadeInterval;
-                if (currentFadeTime > 1.0f) {
-                    currentFadeTime = 1.0f;
-                    this.m_FadeTimeValid = false;
-                }
+        /// <summary>
+        /// 更新迷雾显示
+        /// </summary>
+        public void UpdateFog() 
+        {
 
-                this.m_RenderMat.SetFloat("_FadeTime", currentFadeTime);
-            }
         }
     }
 }
